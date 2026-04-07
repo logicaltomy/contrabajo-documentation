@@ -1,8 +1,10 @@
-❚❙❘ VERSION 0.1.0-Pre-Alpha
+❚❙❘ VERSION 0.2.0-Pre-Alpha
 ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
-├─• Integración inicial de scripts SQL (MS_Usuarios, MS_Comunicaciones, MS_Servicios).
-├─• Inicio de auditoría de coherencia sobre el sistema transaccional (ACID).
-└─• Validación inicial de columnas en MS_Usuarios: tipo_perfil, region, coordenadas, calle y tipo_evento.
+├─• Reestructuración total del repositorio según requerimientos Duoc UC Fase 2.
+├─• Creación de carpetas raíz: /Documentación, /Producto y /Gestión.
+├─• Migración de scripts SQL a la carpeta /Producto.
+├─• Creación de archivo Integrantes.txt en la raíz.
+└─• Reubicación de archivos de control (README y CHANGELOG) a la raíz.
 
-->>> MS_Usuarios - Tabla usuario: Eliminar columna run y fecha_nacimiento (3FN).
-->>> MS_Usuarios - Tabla usuario: Eliminar columna dv.
+->>> Gestión: Subir "1.1.2 Documento de registro de definición e identificación del proyecto.docx".
+->>> Documentación: Cargar MER, UML y Wireframes.
