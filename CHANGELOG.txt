@@ -1,0 +1,8 @@
+❚❙❘ VERSION 0.1.0-Pre-Alpha
+⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+├─• Integración inicial de scripts SQL (MS_Usuarios, MS_Comunicaciones, MS_Servicios).
+├─• Inicio de auditoría de coherencia sobre el sistema transaccional (ACID).
+└─• Validación inicial de columnas en MS_Usuarios: tipo_perfil, region, coordenadas, calle y tipo_evento.
+
+->>> MS_Usuarios - Tabla usuario: Eliminar columna run y fecha_nacimiento (3FN).
+->>> MS_Usuarios - Tabla usuario: Eliminar columna dv.
