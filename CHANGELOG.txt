@@ -1,8 +1,15 @@
-❚❙❘ VERSION 0.1.0-Pre-Alpha
-⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
-├─• Integración inicial de scripts SQL (MS_Usuarios, MS_Comunicaciones, MS_Servicios).
-├─• Inicio de auditoría de coherencia sobre el sistema transaccional (ACID).
-└─• Validación inicial de columnas en MS_Usuarios: tipo_perfil, region, coordenadas, calle y tipo_evento.
+❚❙❘ VERSION 1.1.0-Pre-Alpha 
+[new branch] feat/database -> feat/database
+⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+├─• Refactor de identificacion de usuario: run ahora INT y dv VARCHAR(1)
+├─• Se agrega id_estado en usuario para control de estado del sistema
+├─• Normalizacion de cedula_identidad para separar datos de documento vs input usuario
+├─• Eliminacion de campo villa en direccion por falta de contexto real
+├─• Simplificacion de historial_usuario eliminando metricas complejas no auditables
+├─• Simplificacion de sesion_usuario eliminando datos de dispositivo e IP
+├─• Eliminacion de canal en recuperacion_cuenta por falta de uso funcional
 
-->>> MS_Usuarios - Tabla usuario: Eliminar columna run y fecha_nacimiento (3FN).
-->>> MS_Usuarios - Tabla usuario: Eliminar columna dv.
+└─• Ajuste general del modelo para reducir complejidad y mejorar mantenibilidad
+
+->>> Definir uso real de id_estado y su integracion con MS_Comunicaciones
+->>> Evaluar futura normalizacion de logs vs auditoria avanzada

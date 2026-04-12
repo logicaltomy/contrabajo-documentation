@@ -62,7 +62,6 @@ CREATE TABLE dbo.direccion (
     id_direccion INT IDENTITY(1,1) NOT NULL,
     calle VARCHAR(80) NOT NULL,
     numero VARCHAR(10) NULL,
-    villa VARCHAR(80) NULL,
     id_comuna INT NOT NULL,
     id_coordenadas INT NULL,
     CONSTRAINT PK_direccion PRIMARY KEY (id_direccion),
@@ -81,8 +80,8 @@ GO
 
 CREATE TABLE dbo.usuario (
     id_usuario INT IDENTITY(1,1) NOT NULL,
-    run VARCHAR(12) NOT NULL,
-    dv VARCHAR(2) NOT NULL,
+    run INT NOT NULL,
+    dv VARCHAR(1) NOT NULL,
     username VARCHAR(30) NOT NULL,
     nombre VARCHAR(70) NOT NULL,
     a_paterno VARCHAR(70) NOT NULL,
@@ -95,6 +94,7 @@ CREATE TABLE dbo.usuario (
     verificado BIT NOT NULL CONSTRAINT DF_usuario_verificado DEFAULT 0,
     id_tipo_perfil SMALLINT NOT NULL,
     id_direccion INT NULL,
+    id_estado INT NOT NULL,
     CONSTRAINT PK_usuario PRIMARY KEY (id_usuario),
     CONSTRAINT UQ_usuario_run UNIQUE (run),
     CONSTRAINT UQ_usuario_username UNIQUE (username),
@@ -118,8 +118,9 @@ GO
 CREATE TABLE dbo.cedula_identidad (
     id_documento INT IDENTITY(1,1) NOT NULL,
     nro_documento VARCHAR(20) NOT NULL,
-    run VARCHAR(12) NULL,
-    fecha_nacimiento DATE NULL,
+    run_documento INT NULL,
+    dv_documento VARCHAR(1) NULL,
+    fecha_nacimiento_documento DATE NULL,
     id_usuario INT NOT NULL,
     CONSTRAINT PK_cedula_identidad PRIMARY KEY (id_documento),
     CONSTRAINT UQ_cedula_identidad_usuario UNIQUE (id_usuario),
@@ -130,12 +131,9 @@ GO
 
 CREATE TABLE dbo.historial_usuario (
     id_historial_usuario BIGINT IDENTITY(1,1) NOT NULL,
-    fecha_historial_usuario DATETIME2(0) NOT NULL CONSTRAINT DF_historial_usuario_fecha DEFAULT SYSUTCDATETIME(),
     fecha_ultima_conexion DATETIME2(0) NULL,
     cantidad_conexiones INT NOT NULL CONSTRAINT DF_historial_usuario_conexiones DEFAULT 0,
     total_vistas_perfil INT NOT NULL CONSTRAINT DF_historial_usuario_vistas DEFAULT 0,
-    promedio_tiempo_sesion INT NOT NULL CONSTRAINT DF_historial_usuario_tiempo DEFAULT 0,
-    nivel_actividad VARCHAR(20) NULL,
     ultimo_dispositivo VARCHAR(100) NULL,
     id_usuario INT NOT NULL,
     CONSTRAINT PK_historial_usuario PRIMARY KEY (id_historial_usuario),
@@ -169,9 +167,6 @@ CREATE TABLE dbo.sesion_usuario (
     fecha_inicio DATETIME2(0) NOT NULL CONSTRAINT DF_sesion_usuario_inicio DEFAULT SYSUTCDATETIME(),
     fecha_expiracion DATETIME2(0) NOT NULL,
     fecha_ultimo_acceso DATETIME2(0) NULL,
-    ip_creacion VARCHAR(45) NULL,
-    dispositivo VARCHAR(120) NULL,
-    activa BIT NOT NULL CONSTRAINT DF_sesion_usuario_activa DEFAULT 1,
     CONSTRAINT PK_sesion_usuario PRIMARY KEY (id_sesion_usuario),
     CONSTRAINT UQ_sesion_usuario_token_hash UNIQUE (token_hash),
     CONSTRAINT FK_sesion_usuario_usuario FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
@@ -197,14 +192,12 @@ CREATE TABLE dbo.recuperacion_cuenta (
     id_recuperacion BIGINT IDENTITY(1,1) NOT NULL,
     id_usuario INT NOT NULL,
     codigo_hash VARCHAR(255) NOT NULL,
-    canal VARCHAR(20) NOT NULL,
     fecha_creacion DATETIME2(0) NOT NULL CONSTRAINT DF_recuperacion_cuenta_creacion DEFAULT SYSUTCDATETIME(),
     fecha_expiracion DATETIME2(0) NOT NULL,
     fecha_uso DATETIME2(0) NULL,
     usada BIT NOT NULL CONSTRAINT DF_recuperacion_cuenta_usada DEFAULT 0,
     CONSTRAINT PK_recuperacion_cuenta PRIMARY KEY (id_recuperacion),
-    CONSTRAINT FK_recuperacion_cuenta_usuario FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario),
-    CONSTRAINT CK_recuperacion_cuenta_canal CHECK (canal IN ('correo', 'sms'))
+    CONSTRAINT FK_recuperacion_cuenta_usuario FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
 );
 GO
 
@@ -213,14 +206,6 @@ CREATE INDEX IX_usuario_direccion ON dbo.usuario(id_direccion);
 CREATE INDEX IX_foto_usuario ON dbo.foto(id_usuario);
 CREATE INDEX IX_log_actividad_usuario_fecha ON dbo.log_actividad(id_usuario, fecha_evento DESC);
 CREATE INDEX IX_log_actividad_tipo_evento_fecha ON dbo.log_actividad(id_tipo_evento, fecha_evento DESC);
-CREATE INDEX IX_sesion_usuario_usuario_activa ON dbo.sesion_usuario(id_usuario, activa);
 CREATE INDEX IX_verificacion_cuenta_usuario ON dbo.verificacion_cuenta(id_usuario, usada);
 CREATE INDEX IX_recuperacion_cuenta_usuario ON dbo.recuperacion_cuenta(id_usuario, usada);
-GO
-
-/*
-Referencias logicas cruzadas:
-- log_actividad.entidad_afectada + entidad_id puede apuntar a ofertas, citas o chats de otros microservicios.
-- No se crean FKs entre bases para mantener autonomia por microservicio.
-*/
 GO
