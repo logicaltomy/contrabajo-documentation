@@ -1,15 +1,17 @@
-❚❙❘ VERSION 1.1.0-Pre-Alpha 
-[new branch] feat/database -> feat/database
-⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
-├─• Refactor de identificacion de usuario: run ahora INT y dv VARCHAR(1)
-├─• Se agrega id_estado en usuario para control de estado del sistema
-├─• Normalizacion de cedula_identidad para separar datos de documento vs input usuario
-├─• Eliminacion de campo villa en direccion por falta de contexto real
-├─• Simplificacion de historial_usuario eliminando metricas complejas no auditables
-├─• Simplificacion de sesion_usuario eliminando datos de dispositivo e IP
-├─• Eliminacion de canal en recuperacion_cuenta por falta de uso funcional
+❚❙❘ VERSION 1.1.1.b-Pre-Alpha
+⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
+├─• Adaptacion de scripts SQL para Azure SQL Database.
+├─• Eliminacion de CREATE DATABASE, USE y GO en scripts preparados para despliegue cloud.
+├─• Reordenamiento de DROP TABLE para evitar conflictos por claves foraneas.
+├─• Documentacion de referencias logicas entre microservicios sin FK cruzadas.
+├─• Actualizacion de MS_Usuarios para incluir comentario de referencia logica a MS_Servicios.estado.
+├─• Eliminacion de columna detalle en dbo.oferta_servicio.
+├─• Eliminacion de columna moneda en dbo.oferta_servicio.
+├─• Eliminacion de tabla dbo.historial_servicios.
+├─• Ajuste de indices y estructura de MS_Servicios.
+└─• Preparacion de scripts para despliegue directo en Azure SQL Database.
 
-└─• Ajuste general del modelo para reducir complejidad y mejorar mantenibilidad
-
-->>> Definir uso real de id_estado y su integracion con MS_Comunicaciones
-->>> Evaluar futura normalizacion de logs vs auditoria avanzada
+->>> Crear y poblar MS_Comunicaciones en Azure.
+->>> Crear y poblar MS_Servicios en Azure.
+->>> Generar MER visual desde DBeaver.
+->>> Configurar cadenas JDBC para Spring Boot.
