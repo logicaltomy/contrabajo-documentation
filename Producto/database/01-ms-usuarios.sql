@@ -2,7 +2,6 @@
 -- ELIMINACIÓN DE TABLAS EN ORDEN CORRECTO (HIJOS → PADRES)
 -- =========================================================
 IF OBJECT_ID(N'dbo.recuperacion_cuenta', N'U') IS NOT NULL DROP TABLE dbo.recuperacion_cuenta;
-IF OBJECT_ID(N'dbo.pregunta_seguridad_usuario', N'U') IS NOT NULL DROP TABLE dbo.pregunta_seguridad_usuario;
 IF OBJECT_ID(N'dbo.sesion_usuario', N'U') IS NOT NULL DROP TABLE dbo.sesion_usuario;
 IF OBJECT_ID(N'dbo.historial_usuario', N'U') IS NOT NULL DROP TABLE dbo.historial_usuario;
 IF OBJECT_ID(N'dbo.cedula_identidad', N'U') IS NOT NULL DROP TABLE dbo.cedula_identidad;
@@ -16,13 +15,14 @@ IF OBJECT_ID(N'dbo.tipo_perfil', N'U') IS NOT NULL DROP TABLE dbo.tipo_perfil;
 
 -- =========================================================
 -- TABLA: TIPO PERFIL
--- Almacena los distintos tipos de perfil del sistema.
--- Ejemplo:
--- - Cliente
--- - Trabajador
+-- Esta tabla almacena los tipos de perfil disponibles.
+-- Ejemplos:
+-- - Cliente / Usuario normal que solicita un servicio
+-- - Trabajador / Prestador de servicios
 --
--- SMALLINT es suficiente porque la cantidad de perfiles
--- posibles será reducida.
+-- Se utiliza SMALLINT porque la cantidad de perfiles
+-- posibles es reducida y no se espera que crezca demasiado.
+-- SMALLINT permite ahorrar espacio respecto a INT.
 -- =========================================================
 CREATE TABLE dbo.tipo_perfil (
     id_tipo_perfil SMALLINT IDENTITY(1,1) PRIMARY KEY,
@@ -31,7 +31,11 @@ CREATE TABLE dbo.tipo_perfil (
 
 -- =========================================================
 -- TABLA: REGIÓN
--- Almacena las regiones disponibles dentro de la aplicación.
+-- Almacena las distintas regiones disponibles dentro
+-- del alcance de la aplicación.
+--
+-- Se utiliza INT porque es un identificador numérico simple
+-- y permite crecimiento suficiente a futuro.
 -- =========================================================
 CREATE TABLE dbo.region (
     id_region INT IDENTITY(1,1) PRIMARY KEY,
@@ -40,13 +44,16 @@ CREATE TABLE dbo.region (
 
 -- =========================================================
 -- TABLA: COORDENADAS
--- Permite guardar latitud y longitud de usuarios,
--- direcciones o servicios.
+-- Permite almacenar coordenadas geográficas asociadas
+-- a usuarios, direcciones o servicios.
 --
--- Será útil para:
--- - Buscar trabajadores cercanos
--- - Filtrar por ubicación
--- - Ordenar por distancia
+-- Esto será útil para:
+-- - Mostrar trabajadores cercanos
+-- - Segmentar resultados por ubicación
+-- - Ordenar trabajadores según distancia
+--
+-- Se utiliza DECIMAL porque se requiere precisión
+-- en la latitud y longitud.
 -- =========================================================
 CREATE TABLE dbo.coordenadas (
     id_coordenadas INT IDENTITY(1,1) PRIMARY KEY,
@@ -57,7 +64,11 @@ CREATE TABLE dbo.coordenadas (
 
 -- =========================================================
 -- TABLA: COMUNA
--- Representa las comunas asociadas a cada región.
+-- Representa las comunas disponibles dentro de una región.
+--
+-- Esto permitirá asociar usuarios y direcciones
+-- a una comuna específica, además de facilitar filtros
+-- de búsqueda por área de trabajo.
 -- =========================================================
 CREATE TABLE dbo.comuna (
     id_comuna INT IDENTITY(1,1) PRIMARY KEY,
@@ -69,9 +80,16 @@ CREATE TABLE dbo.comuna (
 
 -- =========================================================
 -- TABLA: DIRECCIÓN
--- Almacena la dirección de un usuario.
+-- Almacena la dirección del usuario.
 --
--- Incluye calle, número, comuna y coordenadas opcionales.
+-- Incluye:
+-- - Calle
+-- - Número
+-- - Comuna
+-- - Coordenadas opcionales
+--
+-- Las coordenadas son opcionales porque no todos los usuarios
+-- querrán compartir ubicación exacta.
 -- =========================================================
 CREATE TABLE dbo.direccion (
     id_direccion INT IDENTITY(1,1) PRIMARY KEY,
@@ -87,19 +105,50 @@ CREATE TABLE dbo.direccion (
 -- TABLA: USUARIO
 -- Tabla principal del microservicio.
 --
+-- Explicaciones importantes:
+--
+-- run:
+-- Se utiliza INT porque el RUN chileno es un número
+-- que no requiere operaciones decimales.
+--
+-- No se usa INT(8) porque en SQL Server el INT no acepta
+-- longitud entre paréntesis. INT ya tiene un tamaño fijo.
+--
+-- dv:
+-- Se utiliza VARCHAR(1) porque el dígito verificador
+-- puede ser un número o la letra K.
+--
+-- username:
+-- Nombre visible o identificador del usuario.
+--
+-- a_materno:
+-- Se deja NULL porque algunas personas pueden no tener
+-- apellido materno o utilizar solamente uno.
+--
 -- telefono:
--- Se utiliza VARCHAR(9) porque el teléfono es texto,
--- no un valor matemático.
+-- Se utiliza VARCHAR(9) porque, aunque almacena números,
+-- sigue siendo texto ingresado por el usuario.
+-- No se realizan operaciones matemáticas con él.
+--
+-- correo:
+-- Se utiliza VARCHAR(60) para almacenar el email del usuario.
+--
+-- contrasena_hash:
+-- Se utiliza VARCHAR(255) porque los hashes generados
+-- por algoritmos modernos suelen ser extensos.
+--
+-- fecha_registro:
+-- Se genera automáticamente al crear el usuario.
 --
 -- verificado:
--- BIT permite representar:
--- 0 = No verificado
--- 1 = Verificado
+-- Se utiliza BIT porque solamente puede tomar dos valores:
+-- 0 = Usuario no verificado
+-- 1 = Usuario verificado
 --
 -- id_estado:
 -- Referencia lógica hacia MS_Servicios.estado(id_estado)
--- pero no se implementa FK real para evitar acoplamiento
--- entre microservicios.
+-- pero no se implementa FOREIGN KEY para mantener
+-- desacoplamiento entre microservicios.
 -- =========================================================
 CREATE TABLE dbo.usuario (
     id_usuario INT IDENTITY(1,1) PRIMARY KEY,
@@ -127,10 +176,10 @@ CREATE TABLE dbo.usuario (
 -- TABLA: FOTO
 -- Almacena imágenes asociadas al usuario.
 --
--- Puede contener:
+-- Aquí se podrán guardar:
 -- - Foto de perfil
--- - Evidencia de trabajos realizados
--- - Imágenes asociadas a servicios
+-- - Fotografías de trabajos realizados
+-- - Evidencia visual de servicios prestados
 -- =========================================================
 CREATE TABLE dbo.foto (
     id_foto INT IDENTITY(1,1) PRIMARY KEY,
@@ -142,11 +191,15 @@ CREATE TABLE dbo.foto (
 
 -- =========================================================
 -- TABLA: CÉDULA IDENTIDAD
--- Permite almacenar información extraída desde OCR
--- para validación de identidad.
+-- Permite almacenar datos extraídos desde la cédula.
 --
--- Los campos del documento pueden quedar NULL
--- hasta que el OCR procese completamente la imagen.
+-- Esta información se utilizará junto a OCR para validar
+-- que los datos ingresados por el usuario coincidan
+-- con la información real del documento.
+-- En esta tabla la cédula funciona como una validación complementaria,
+-- y no necesariamente todos los campos estarán disponibles desde el primer momento.
+-- Por eso run_documento, dv_documento y fecha_nacimiento_documento quedaron como NULL, 
+-- Para permitir que la fila exista aunque aún no se hayan procesado los datos del documento.
 -- =========================================================
 CREATE TABLE dbo.cedula_identidad (
     id_documento INT IDENTITY(1,1) PRIMARY KEY,
@@ -160,7 +213,13 @@ CREATE TABLE dbo.cedula_identidad (
 
 -- =========================================================
 -- TABLA: HISTORIAL USUARIO
--- Permite almacenar trazabilidad simple del usuario.
+-- Tabla de trazabilidad simple.
+--
+-- Permite almacenar:
+-- - Última conexión
+-- - Cantidad de conexiones
+-- - Total de vistas al perfil
+-- - Último dispositivo utilizado
 -- =========================================================
 CREATE TABLE dbo.historial_usuario (
     id_historial_usuario BIGINT IDENTITY(1,1) PRIMARY KEY,
@@ -174,8 +233,12 @@ CREATE TABLE dbo.historial_usuario (
 
 -- =========================================================
 -- TABLA: SESIÓN USUARIO
--- Permite controlar sesiones activas, expiración
--- y último acceso.
+-- Permite administrar las sesiones activas.
+--
+-- Esta tabla servirá para:
+-- - Saber si un usuario sigue autenticado
+-- - Controlar expiración de sesión
+-- - Registrar último acceso
 -- =========================================================
 CREATE TABLE dbo.sesion_usuario (
     id_sesion_usuario BIGINT IDENTITY(1,1) PRIMARY KEY,
@@ -187,51 +250,50 @@ CREATE TABLE dbo.sesion_usuario (
     FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
 );
 
--- =========================================================
--- TABLA: PREGUNTA SEGURIDAD USUARIO
--- Almacena preguntas y respuestas de seguridad
--- permanentes del usuario.
---
--- Cada usuario solo puede tener un único conjunto
--- de preguntas de seguridad.
--- =========================================================
-CREATE TABLE dbo.pregunta_seguridad_usuario (
+-- Tabla de preguntas de seguridad del usuario.
+-- Esta tabla se separa de dbo.usuario para evitar sobrecargar la entidad principal
+-- con información que solo será utilizada en procesos de recuperación de cuenta.
+-- Además, permite mantener una relación 1:1 entre usuario y preguntas de seguridad.
+CREATE TABLE dbo.recuperacion_cuenta  (
+    -- Identificador único interno de la tabla.
+    -- Se utiliza IDENTITY para autoincrementar automáticamente.
     id_pregunta_seguridad INT IDENTITY(1,1) PRIMARY KEY,
+
+    -- Relación directa con el usuario dueño de estas preguntas.
+    -- Se marca como UNIQUE para asegurar que cada usuario tenga
+    -- un solo conjunto de preguntas de seguridad.
     id_usuario INT NOT NULL UNIQUE,
+
+    -- Primera pregunta de seguridad configurada por el usuario.
+    -- Se deja un tamaño amplio para permitir preguntas personalizadas.
     pregunta_seguridad1 VARCHAR(150) NOT NULL,
+
+    -- Respuesta a la primera pregunta de seguridad.
+    -- No se almacena en texto plano por motivos de seguridad.
+    -- Se almacena un hash, similar a las contraseñas.
     respuesta_seguridad1_hash VARCHAR(255) NOT NULL,
+
+    -- Segunda pregunta de seguridad configurada por el usuario.
     pregunta_seguridad2 VARCHAR(150) NOT NULL,
+
+    -- Respuesta a la segunda pregunta de seguridad.
+    -- También se almacena como hash.
     respuesta_seguridad2_hash VARCHAR(255) NOT NULL,
+
+    -- Fecha de la última actualización de las preguntas de seguridad.
+    -- Se utiliza para auditoría y control de cambios.
     fecha_actualizacion DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
 
+    -- Relación con la tabla principal de usuarios.
     CONSTRAINT FK_pregunta_seguridad_usuario_usuario
         FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
 );
 
 -- =========================================================
--- TABLA: RECUPERACION CUENTA
--- Registra solicitudes de recuperación de cuenta.
---
--- Puede almacenar códigos temporales enviados
--- por correo, SMS o futuras validaciones.
--- =========================================================
-CREATE TABLE dbo.recuperacion_cuenta (
-    id_recuperacion BIGINT IDENTITY(1,1) PRIMARY KEY,
-    id_usuario INT NOT NULL,
-    codigo_hash VARCHAR(255) NOT NULL,
-    fecha_creacion DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
-    fecha_expiracion DATETIME2(0) NOT NULL,
-    fecha_uso DATETIME2(0) NULL,
-    usada BIT NOT NULL DEFAULT 0,
-    FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
-);
-
--- =========================================================
 -- ÍNDICES
--- Mejoran búsquedas y joins frecuentes.
+-- Se crean para optimizar búsquedas frecuentes y joins.
 -- =========================================================
 CREATE INDEX IX_usuario_tipo_perfil ON dbo.usuario(id_tipo_perfil);
 CREATE INDEX IX_usuario_direccion ON dbo.usuario(id_direccion);
 CREATE INDEX IX_foto_usuario ON dbo.foto(id_usuario);
-CREATE INDEX IX_pregunta_seguridad_usuario ON dbo.pregunta_seguridad_usuario(id_usuario);
-CREATE INDEX IX_recuperacion_cuenta_usuario ON dbo.recuperacion_cuenta(id_usuario, usada);
+CREATE INDEX IX_recuperacion_cuenta_usuario ON dbo.recuperacion_cuenta(id_usuario);
