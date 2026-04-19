@@ -233,21 +233,50 @@ CREATE TABLE dbo.historial_usuario (
 
 -- =========================================================
 -- TABLA: SESIÓN USUARIO
--- Permite administrar las sesiones activas.
+-- Permite administrar las sesiones activas del usuario.
 --
 -- Esta tabla servirá para:
 -- - Saber si un usuario sigue autenticado
 -- - Controlar expiración de sesión
 -- - Registrar último acceso
+-- - Guardar IP de creación de sesión
+-- - Guardar el dispositivo desde el cual inició sesión
+-- - Saber si la sesión sigue activa o fue cerrada manualmente
 -- =========================================================
 CREATE TABLE dbo.sesion_usuario (
     id_sesion_usuario BIGINT IDENTITY(1,1) PRIMARY KEY,
+
+    -- Relación con el usuario dueño de la sesión
     id_usuario INT NOT NULL,
+
+    -- Hash único del token de autenticación
     token_hash VARCHAR(255) NOT NULL UNIQUE,
+
+    -- Fecha de inicio de sesión
+    -- Se genera automáticamente al momento de crear el registro
     fecha_inicio DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
-    fecha_expiracion DATETIME2(0) NOT NULL,
+
+    -- Fecha de expiración del token o sesión
+    fecha_expiracion DATETIME2(0) NULL,
+
+    -- Fecha del último acceso realizado por el usuario
     fecha_ultimo_acceso DATETIME2(0) NULL,
-    FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
+
+    -- Dirección IP desde la cual se creó la sesión
+    -- Se utiliza VARCHAR(45) para soportar IPv4 e IPv6
+    ip_creacion VARCHAR(45) NULL,
+
+    -- Información del dispositivo o navegador utilizado
+    dispositivo VARCHAR(120) NULL,
+
+    -- Indica si la sesión sigue activa
+    -- BIT se usa porque solamente puede tener dos valores:
+    -- 0 = Sesión cerrada o expirada
+    -- 1 = Sesión activa
+    activa BIT NOT NULL DEFAULT 1,
+
+    CONSTRAINT FK_sesion_usuario_usuario
+        FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
 );
 
 -- Tabla de preguntas de seguridad del usuario.
