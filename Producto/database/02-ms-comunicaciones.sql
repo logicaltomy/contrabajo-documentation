@@ -7,7 +7,6 @@ IF OBJECT_ID(N'dbo.notificacion', N'U') IS NOT NULL DROP TABLE dbo.notificacion;
 IF OBJECT_ID(N'dbo.mensaje_soporte', N'U') IS NOT NULL DROP TABLE dbo.mensaje_soporte;
 IF OBJECT_ID(N'dbo.chat_cita', N'U') IS NOT NULL DROP TABLE dbo.chat_cita;
 IF OBJECT_ID(N'dbo.tipo_reporte', N'U') IS NOT NULL DROP TABLE dbo.tipo_reporte;
-GO
 
 -- =========================================================
 -- TABLA: TIPO_REPORTE
@@ -19,27 +18,32 @@ GO
 -- - Incumplimiento de servicio
 -- - Estafa
 -- - Contenido inapropiado
+--
+-- Se elimina la columna detalle porque el nombre del tipo
+-- de reporte ya entrega suficiente contexto.
 -- =========================================================
 CREATE TABLE dbo.tipo_reporte (
     id_tipo_reporte INT IDENTITY(1,1) NOT NULL,
     nombre VARCHAR(100) NOT NULL,
+
     CONSTRAINT PK_tipo_reporte PRIMARY KEY (id_tipo_reporte),
     CONSTRAINT UQ_tipo_reporte_nombre UNIQUE (nombre)
 );
-GO
 
 -- =========================================================
 -- TABLA: CHAT_CITA
--- Representa una conversación asociada a una cita o servicio.
+-- Representa una conversación asociada a una cita.
 --
--- Este chat se genera entre:
+-- El chat existe entre:
 -- - Trabajador
 -- - Cliente
+--
 -- activo:
--- Permite cerrar el chat sin eliminarlo físicamente.
+-- Permite cerrar un chat sin eliminarlo físicamente.
 -- =========================================================
 CREATE TABLE dbo.chat_cita (
     id_chat_cita BIGINT IDENTITY(1,1) NOT NULL,
+
     fecha_creacion DATETIME2(0) NOT NULL
         CONSTRAINT DF_chat_cita_fecha_creacion DEFAULT SYSUTCDATETIME(),
 
@@ -52,16 +56,15 @@ CREATE TABLE dbo.chat_cita (
 
     CONSTRAINT PK_chat_cita PRIMARY KEY (id_chat_cita)
 );
-GO
 
 -- =========================================================
 -- TABLA: MENSAJE_SOPORTE
--- Almacena mensajes enviados por usuarios hacia soporte.
+-- Almacena solicitudes o mensajes enviados a soporte.
 --
--- Se utiliza para:
--- - Problemas técnicos
+-- Casos de uso:
 -- - Reclamos
 -- - Dudas
+-- - Problemas técnicos
 -- - Problemas con pagos o citas
 --
 -- resuelto:
@@ -70,6 +73,7 @@ GO
 -- =========================================================
 CREATE TABLE dbo.mensaje_soporte (
     id_mensaje_soporte INT IDENTITY(1,1) NOT NULL,
+
     asunto VARCHAR(80) NOT NULL,
     detalle NVARCHAR(500) NOT NULL,
 
@@ -85,7 +89,6 @@ CREATE TABLE dbo.mensaje_soporte (
 
     CONSTRAINT PK_mensaje_soporte PRIMARY KEY (id_mensaje_soporte)
 );
-GO
 
 -- =========================================================
 -- TABLA: NOTIFICACION
@@ -95,44 +98,38 @@ GO
 -- - Nuevo mensaje
 -- - Cambio de estado de cita
 -- - Respuesta de soporte
--- - Reporte recibido
---
--- tipo:
--- Permite categorizar la notificación.
 --
 -- leida:
 -- 0 = No leída
 -- 1 = Leída
 -- =========================================================
 CREATE TABLE dbo.notificacion (
-id_notificacion BIGINT IDENTITY(1,1) NOT NULL,
-fecha_creacion DATETIME2(0) NOT NULL,
-detalle NVARCHAR(200) NOT NULL,
-id_usuario_receptor INT NOT NULL,
-leida BIT NOT NULL DEFAULT 0,
-url_destino VARCHAR(300) NULL,
+    id_notificacion BIGINT IDENTITY(1,1) NOT NULL,
+
+    fecha_creacion DATETIME2(0) NOT NULL
+        CONSTRAINT DF_notificacion_fecha_creacion DEFAULT SYSUTCDATETIME(),
+
+    detalle NVARCHAR(200) NOT NULL,
+    id_usuario_receptor INT NOT NULL,
+
+    leida BIT NOT NULL
+        CONSTRAINT DF_notificacion_leida DEFAULT 0,
+
+    url_destino VARCHAR(300) NULL,
+
     CONSTRAINT PK_notificacion PRIMARY KEY (id_notificacion)
 );
-GO
 
 -- =========================================================
 -- TABLA: REPORTE
--- Permite a un usuario reportar una situación, usuario
--- o funcionalidad de la aplicación.
+-- Permite a un usuario reportar una situación.
 --
--- entidad_reportada:
--- Permite saber qué fue reportado.
+-- Se elimina funcion_asociada y entidad_reportada
+-- porque generan complejidad adicional y muchas veces
+-- la información ya puede inferirse desde el tipo de reporte.
 --
 -- entidad_id:
--- Guarda el identificador interno de dicha entidad.
---
--- funcion_asociada:
--- Puede almacenar valores como:
--- - chat
--- - perfil
--- - cita
--- - servicio
--- - comentario
+-- Guarda el identificador interno relacionado al reporte.
 -- =========================================================
 CREATE TABLE dbo.reporte (
     id_reporte BIGINT IDENTITY(1,1) NOT NULL,
@@ -143,7 +140,6 @@ CREATE TABLE dbo.reporte (
     descripcion_reporte NVARCHAR(500) NOT NULL,
 
     id_usuario_emisor INT NOT NULL,
-
     id_tipo_reporte INT NOT NULL,
 
     entidad_id BIGINT NULL,
@@ -154,22 +150,17 @@ CREATE TABLE dbo.reporte (
         FOREIGN KEY (id_tipo_reporte)
         REFERENCES dbo.tipo_reporte(id_tipo_reporte)
 );
-GO
 
 -- =========================================================
 -- TABLA: MENSAJE_CHAT
 -- Almacena los mensajes enviados dentro de un chat.
 --
--- Se registran:
--- - Fecha de envío
--- - Fecha de recepción
--- - Fecha de lectura
--- - Emisor y receptor
--- - Contenido del mensaje
+-- Se eliminó url_adjunto porque agrega complejidad
+-- relacionada con carga y almacenamiento de imágenes,
+-- archivos y evidencias.
 --
--- url_adjunto:
--- Permite guardar imágenes, archivos o evidencia
--- asociada al mensaje.
+-- Para una primera versión simple del sistema,
+-- solo se manejará texto.
 -- =========================================================
 CREATE TABLE dbo.mensaje_chat (
     id_mensaje_chat BIGINT IDENTITY(1,1) NOT NULL,
@@ -182,11 +173,8 @@ CREATE TABLE dbo.mensaje_chat (
 
     contenido NVARCHAR(1000) NOT NULL,
 
-    url_adjunto VARCHAR(300) NULL,
-
     id_emisor INT NOT NULL,
     id_receptor INT NOT NULL,
-
     id_chat_cita BIGINT NOT NULL,
 
     CONSTRAINT PK_mensaje_chat PRIMARY KEY (id_mensaje_chat),
@@ -195,50 +183,40 @@ CREATE TABLE dbo.mensaje_chat (
         FOREIGN KEY (id_chat_cita)
         REFERENCES dbo.chat_cita(id_chat_cita)
 );
-GO
 
 -- =========================================================
 -- ÍNDICES
--- Se crean para optimizar consultas frecuentes y joins.
+-- Se crean para optimizar búsquedas frecuentes.
 -- =========================================================
 CREATE INDEX IX_chat_cita_trabajador_cliente
 ON dbo.chat_cita(id_trabajador, id_cliente);
-GO
 
 CREATE INDEX IX_chat_cita_id_cita
 ON dbo.chat_cita(id_cita);
-GO
 
 CREATE INDEX IX_chat_cita_activo
 ON dbo.chat_cita(activo);
-GO
 
 CREATE INDEX IX_mensaje_chat_chat_fecha
 ON dbo.mensaje_chat(id_chat_cita, fecha_envio);
-GO
 
 CREATE INDEX IX_mensaje_chat_emisor
 ON dbo.mensaje_chat(id_emisor, fecha_envio DESC);
-GO
 
 CREATE INDEX IX_notificacion_usuario_leida
 ON dbo.notificacion(id_usuario_receptor, leida, fecha_creacion DESC);
-GO
 
 CREATE INDEX IX_reporte_usuario_tipo
 ON dbo.reporte(id_usuario_emisor, id_tipo_reporte, fecha_creacion DESC);
-GO
 
 CREATE INDEX IX_mensaje_soporte_emisor_resuelto
 ON dbo.mensaje_soporte(id_emisor, resuelto, fecha_envio DESC);
-GO
 
 -- =========================================================
 -- REFERENCIAS LÓGICAS ENTRE MICROSERVICIOS
 --
 -- Estas relaciones no se implementan como FOREIGN KEY
--- porque pertenecen a otros microservicios y se busca
--- mantener desacoplamiento.
+-- porque pertenecen a otros microservicios.
 --
 -- Referencias lógicas:
 --
@@ -256,4 +234,3 @@ GO
 -- chat_cita.id_cita apunta lógicamente a:
 -- MS_Servicios.dbo.cita_servicio.id_cita
 -- =========================================================
-GO
