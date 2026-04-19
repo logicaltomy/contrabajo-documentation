@@ -55,6 +55,7 @@ CREATE TABLE dbo.cita_servicio (
     fecha_fin_trabajo DATETIME2(0) NULL,
     cod_inicio INT NULL,
     cod_final INT NULL,
+
     id_oferta_servicio INT NOT NULL,
 
     -- Referencia lógica a MS_Usuarios.dbo.coordenadas.id_coordenadas

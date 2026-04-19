@@ -1,17 +1,19 @@
-❚❙❘ VERSION 1.1.1.b-Pre-Alpha
+❚❙❘ VERSION 1.3
 ⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺
-├─• Adaptacion de scripts SQL para Azure SQL Database.
-├─• Eliminacion de CREATE DATABASE, USE y GO en scripts preparados para despliegue cloud.
-├─• Reordenamiento de DROP TABLE para evitar conflictos por claves foraneas.
-├─• Documentacion de referencias logicas entre microservicios sin FK cruzadas.
-├─• Actualizacion de MS_Usuarios para incluir comentario de referencia logica a MS_Servicios.estado.
-├─• Eliminacion de columna detalle en dbo.oferta_servicio.
-├─• Eliminacion de columna moneda en dbo.oferta_servicio.
-├─• Eliminacion de tabla dbo.historial_servicios.
-├─• Ajuste de indices y estructura de MS_Servicios.
-└─• Preparacion de scripts para despliegue directo en Azure SQL Database.
+├─• Simplificacion estructural de MS_Comunicaciones.
+├─• Eliminacion de columna detalle en dbo.tipo_reporte.
+├─• Eliminacion de columnas funcion_asociada y entidad_reportada en dbo.reporte.
+├─• Simplificacion de notificaciones eliminando columna tipo.
+├─• Correccion de indices asociados a columnas eliminadas.
+├─• Ajuste de sintaxis SQL Server en tabla dbo.notificacion.
+├─• Reestructuracion y documentacion completa de MS_Comunicaciones.
+├─• Evaluacion de eliminacion de url_adjunto en mensaje_chat para evitar complejidad innecesaria.
+├─• Mantencion de referencias logicas desacopladas entre microservicios.
+├─• Mantencion de chat_cita.activo para cierre logico de conversaciones.
+├─• Mantencion de fecha_resolucion en mensaje_soporte para trazabilidad futura.
+├─• Correccion de DROP TABLE en orden de dependencias.
+└─• Preparacion final de scripts SQL para despliegue directo en Azure SQL Database.
 
-->>> Crear y poblar MS_Comunicaciones en Azure.
-->>> Crear y poblar MS_Servicios en Azure.
-->>> Generar MER visual desde DBeaver.
-->>> Configurar cadenas JDBC para Spring Boot.
+->>> Poblar tablas base de MS_Comunicaciones.
+->>> Poblar tablas base de MS_Servicios.
+
