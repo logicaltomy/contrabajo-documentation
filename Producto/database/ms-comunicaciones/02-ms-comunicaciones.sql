@@ -5,7 +5,7 @@ IF OBJECT_ID(N'dbo.mensaje_chat', N'U') IS NOT NULL DROP TABLE dbo.mensaje_chat;
 IF OBJECT_ID(N'dbo.reporte', N'U') IS NOT NULL DROP TABLE dbo.reporte;
 IF OBJECT_ID(N'dbo.notificacion', N'U') IS NOT NULL DROP TABLE dbo.notificacion;
 IF OBJECT_ID(N'dbo.mensaje_soporte', N'U') IS NOT NULL DROP TABLE dbo.mensaje_soporte;
-IF OBJECT_ID(N'dbo.chat_cita', N'U') IS NOT NULL DROP TABLE dbo.chat_cita;
+IF OBJECT_ID(N'dbo.chat_oferta', N'U') IS NOT NULL DROP TABLE dbo.chat_oferta;
 IF OBJECT_ID(N'dbo.tipo_reporte', N'U') IS NOT NULL DROP TABLE dbo.tipo_reporte;
 
 -- =========================================================
@@ -31,30 +31,36 @@ CREATE TABLE dbo.tipo_reporte (
 );
 
 -- =========================================================
--- TABLA: CHAT_CITA
--- Representa una conversación asociada a una cita.
+-- TABLA: CHAT_OFERTA
+-- Representa una conversación asociada a una oferta.
 --
 -- El chat existe entre:
 -- - Trabajador
 -- - Cliente
 --
+-- Un mismo servicio puede tener múltiples chats,
+-- ya que distintos clientes pueden interactuar
+-- con la misma oferta.
+--
 -- activo:
 -- Permite cerrar un chat sin eliminarlo físicamente.
 -- =========================================================
-CREATE TABLE dbo.chat_cita (
-    id_chat_cita BIGINT IDENTITY(1,1) NOT NULL,
+CREATE TABLE dbo.chat_oferta (
+    id_chat_oferta BIGINT IDENTITY(1,1) NOT NULL,
 
     fecha_creacion DATETIME2(0) NOT NULL
-        CONSTRAINT DF_chat_cita_fecha_creacion DEFAULT SYSUTCDATETIME(),
+        CONSTRAINT DF_chat_oferta_fecha_creacion DEFAULT SYSUTCDATETIME(),
 
     id_trabajador INT NOT NULL,
     id_cliente INT NOT NULL,
-    id_cita INT NULL,
+
+    -- Referencia lógica a MS_Servicios.dbo.oferta_servicio.id_oferta_servicio
+    id_oferta_servicio INT NOT NULL,
 
     activo BIT NOT NULL
-        CONSTRAINT DF_chat_cita_activo DEFAULT 1,
+        CONSTRAINT DF_chat_oferta_activo DEFAULT 1,
 
-    CONSTRAINT PK_chat_cita PRIMARY KEY (id_chat_cita)
+    CONSTRAINT PK_chat_oferta PRIMARY KEY (id_chat_oferta)
 );
 
 -- =========================================================
@@ -82,6 +88,7 @@ CREATE TABLE dbo.mensaje_soporte (
 
     fecha_resolucion DATETIME2(0) NULL,
 
+    -- Referencia lógica a MS_Usuarios.dbo.usuario.id_usuario
     id_emisor INT NOT NULL,
 
     resuelto BIT NOT NULL
@@ -110,6 +117,8 @@ CREATE TABLE dbo.notificacion (
         CONSTRAINT DF_notificacion_fecha_creacion DEFAULT SYSUTCDATETIME(),
 
     detalle NVARCHAR(200) NOT NULL,
+
+    -- Referencia lógica a MS_Usuarios.dbo.usuario.id_usuario
     id_usuario_receptor INT NOT NULL,
 
     leida BIT NOT NULL
@@ -139,7 +148,9 @@ CREATE TABLE dbo.reporte (
 
     descripcion_reporte NVARCHAR(500) NOT NULL,
 
+    -- Referencia lógica a MS_Usuarios.dbo.usuario.id_usuario
     id_usuario_emisor INT NOT NULL,
+
     id_tipo_reporte INT NOT NULL,
 
     entidad_id BIGINT NULL,
@@ -173,32 +184,36 @@ CREATE TABLE dbo.mensaje_chat (
 
     contenido NVARCHAR(1000) NOT NULL,
 
+    -- Referencia lógica a MS_Usuarios.dbo.usuario.id_usuario
     id_emisor INT NOT NULL,
+
+    -- Referencia lógica a MS_Usuarios.dbo.usuario.id_usuario
     id_receptor INT NOT NULL,
-    id_chat_cita BIGINT NOT NULL,
+
+    id_chat_oferta BIGINT NOT NULL,
 
     CONSTRAINT PK_mensaje_chat PRIMARY KEY (id_mensaje_chat),
 
-    CONSTRAINT FK_mensaje_chat_chat_cita
-        FOREIGN KEY (id_chat_cita)
-        REFERENCES dbo.chat_cita(id_chat_cita)
+    CONSTRAINT FK_mensaje_chat_chat_oferta
+        FOREIGN KEY (id_chat_oferta)
+        REFERENCES dbo.chat_oferta(id_chat_oferta)
 );
 
 -- =========================================================
 -- ÍNDICES
 -- Se crean para optimizar búsquedas frecuentes.
 -- =========================================================
-CREATE INDEX IX_chat_cita_trabajador_cliente
-ON dbo.chat_cita(id_trabajador, id_cliente);
+CREATE INDEX IX_chat_oferta_trabajador_cliente
+ON dbo.chat_oferta(id_trabajador, id_cliente);
 
-CREATE INDEX IX_chat_cita_id_cita
-ON dbo.chat_cita(id_cita);
+CREATE INDEX IX_chat_oferta_oferta
+ON dbo.chat_oferta(id_oferta_servicio);
 
-CREATE INDEX IX_chat_cita_activo
-ON dbo.chat_cita(activo);
+CREATE INDEX IX_chat_oferta_activo
+ON dbo.chat_oferta(activo);
 
 CREATE INDEX IX_mensaje_chat_chat_fecha
-ON dbo.mensaje_chat(id_chat_cita, fecha_envio);
+ON dbo.mensaje_chat(id_chat_oferta, fecha_envio);
 
 CREATE INDEX IX_mensaje_chat_emisor
 ON dbo.mensaje_chat(id_emisor, fecha_envio DESC);
@@ -220,8 +235,8 @@ ON dbo.mensaje_soporte(id_emisor, resuelto, fecha_envio DESC);
 --
 -- Referencias lógicas:
 --
--- chat_cita.id_trabajador
--- chat_cita.id_cliente
+-- chat_oferta.id_trabajador
+-- chat_oferta.id_cliente
 -- mensaje_chat.id_emisor
 -- mensaje_chat.id_receptor
 -- notificacion.id_usuario_receptor
@@ -231,6 +246,6 @@ ON dbo.mensaje_soporte(id_emisor, resuelto, fecha_envio DESC);
 -- Todos apuntan lógicamente a:
 -- MS_Usuarios.dbo.usuario.id_usuario
 --
--- chat_cita.id_cita apunta lógicamente a:
--- MS_Servicios.dbo.cita_servicio.id_cita
+-- chat_oferta.id_oferta_servicio apunta lógicamente a:
+-- MS_Servicios.dbo.oferta_servicio.id_oferta_servicio
 -- =========================================================

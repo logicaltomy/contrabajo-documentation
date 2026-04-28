@@ -57,8 +57,8 @@ CREATE TABLE dbo.region (
 -- =========================================================
 CREATE TABLE dbo.coordenadas (
     id_coordenadas INT IDENTITY(1,1) PRIMARY KEY,
-    latitud DECIMAL(10,8) NOT NULL,
-    longitud DECIMAL(11,8) NOT NULL,
+    latitud DECIMAL(10,8) NULL,
+    longitud DECIMAL(11,8) NULL,
     detalle VARCHAR(120) NULL
 );
 
