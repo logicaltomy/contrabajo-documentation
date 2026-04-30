@@ -31,6 +31,7 @@ CREATE TABLE dbo.oferta_servicio (
     descripcion VARCHAR(300) NOT NULL,
     precio DECIMAL(12,2) NULL,
     disponible BIT NOT NULL DEFAULT 1,
+    borrado BIT NOT NULL DEFAULT 0,
     fecha_publicacion DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     id_cat_servicio INT NOT NULL,
     id_tipo_precio INT NULL,
