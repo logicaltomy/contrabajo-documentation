@@ -10,17 +10,6 @@ IF OBJECT_ID(N'dbo.tipo_reporte', N'U') IS NOT NULL DROP TABLE dbo.tipo_reporte;
 
 -- =========================================================
 -- TABLA: TIPO_REPORTE
--- Almacena los distintos tipos de reportes que pueden
--- existir dentro de la plataforma.
---
--- Ejemplos:
--- - Usuario ofensivo
--- - Incumplimiento de servicio
--- - Estafa
--- - Contenido inapropiado
---
--- Se elimina la columna detalle porque el nombre del tipo
--- de reporte ya entrega suficiente contexto.
 -- =========================================================
 CREATE TABLE dbo.tipo_reporte (
     id_tipo_reporte INT IDENTITY(1,1) NOT NULL,
@@ -32,18 +21,6 @@ CREATE TABLE dbo.tipo_reporte (
 
 -- =========================================================
 -- TABLA: CHAT_OFERTA
--- Representa una conversación asociada a una oferta.
---
--- El chat existe entre:
--- - Trabajador
--- - Cliente
---
--- Un mismo servicio puede tener múltiples chats,
--- ya que distintos clientes pueden interactuar
--- con la misma oferta.
---
--- activo:
--- Permite cerrar un chat sin eliminarlo físicamente.
 -- =========================================================
 CREATE TABLE dbo.chat_oferta (
     id_chat_oferta BIGINT IDENTITY(1,1) NOT NULL,
@@ -57,6 +34,11 @@ CREATE TABLE dbo.chat_oferta (
     -- Referencia lógica a MS_Servicios.dbo.oferta_servicio.id_oferta_servicio
     id_oferta_servicio INT NOT NULL,
 
+    -- NUEVO: referencia opcional a cita
+    -- Puede ser NULL porque no todo chat genera una cita
+    -- Referencia lógica a MS_Servicios.dbo.cita_servicio.id_cita
+    id_cita INT NULL,
+
     activo BIT NOT NULL
         CONSTRAINT DF_chat_oferta_activo DEFAULT 1,
 
@@ -65,17 +47,6 @@ CREATE TABLE dbo.chat_oferta (
 
 -- =========================================================
 -- TABLA: MENSAJE_SOPORTE
--- Almacena solicitudes o mensajes enviados a soporte.
---
--- Casos de uso:
--- - Reclamos
--- - Dudas
--- - Problemas técnicos
--- - Problemas con pagos o citas
---
--- resuelto:
--- 0 = Pendiente
--- 1 = Resuelto
 -- =========================================================
 CREATE TABLE dbo.mensaje_soporte (
     id_mensaje_soporte INT IDENTITY(1,1) NOT NULL,
@@ -88,7 +59,6 @@ CREATE TABLE dbo.mensaje_soporte (
 
     fecha_resolucion DATETIME2(0) NULL,
 
-    -- Referencia lógica a MS_Usuarios.dbo.usuario.id_usuario
     id_emisor INT NOT NULL,
 
     resuelto BIT NOT NULL
@@ -99,16 +69,6 @@ CREATE TABLE dbo.mensaje_soporte (
 
 -- =========================================================
 -- TABLA: NOTIFICACION
--- Almacena notificaciones visibles para el usuario.
---
--- Ejemplos:
--- - Nuevo mensaje
--- - Cambio de estado de cita
--- - Respuesta de soporte
---
--- leida:
--- 0 = No leída
--- 1 = Leída
 -- =========================================================
 CREATE TABLE dbo.notificacion (
     id_notificacion BIGINT IDENTITY(1,1) NOT NULL,
@@ -117,8 +77,6 @@ CREATE TABLE dbo.notificacion (
         CONSTRAINT DF_notificacion_fecha_creacion DEFAULT SYSUTCDATETIME(),
 
     detalle NVARCHAR(200) NOT NULL,
-
-    -- Referencia lógica a MS_Usuarios.dbo.usuario.id_usuario
     id_usuario_receptor INT NOT NULL,
 
     leida BIT NOT NULL
@@ -131,14 +89,6 @@ CREATE TABLE dbo.notificacion (
 
 -- =========================================================
 -- TABLA: REPORTE
--- Permite a un usuario reportar una situación.
---
--- Se elimina funcion_asociada y entidad_reportada
--- porque generan complejidad adicional y muchas veces
--- la información ya puede inferirse desde el tipo de reporte.
---
--- entidad_id:
--- Guarda el identificador interno relacionado al reporte.
 -- =========================================================
 CREATE TABLE dbo.reporte (
     id_reporte BIGINT IDENTITY(1,1) NOT NULL,
@@ -148,9 +98,7 @@ CREATE TABLE dbo.reporte (
 
     descripcion_reporte NVARCHAR(500) NOT NULL,
 
-    -- Referencia lógica a MS_Usuarios.dbo.usuario.id_usuario
     id_usuario_emisor INT NOT NULL,
-
     id_tipo_reporte INT NOT NULL,
 
     entidad_id BIGINT NULL,
@@ -164,14 +112,6 @@ CREATE TABLE dbo.reporte (
 
 -- =========================================================
 -- TABLA: MENSAJE_CHAT
--- Almacena los mensajes enviados dentro de un chat.
---
--- Se eliminó url_adjunto porque agrega complejidad
--- relacionada con carga y almacenamiento de imágenes,
--- archivos y evidencias.
---
--- Para una primera versión simple del sistema,
--- solo se manejará texto.
 -- =========================================================
 CREATE TABLE dbo.mensaje_chat (
     id_mensaje_chat BIGINT IDENTITY(1,1) NOT NULL,
@@ -184,10 +124,7 @@ CREATE TABLE dbo.mensaje_chat (
 
     contenido NVARCHAR(1000) NOT NULL,
 
-    -- Referencia lógica a MS_Usuarios.dbo.usuario.id_usuario
     id_emisor INT NOT NULL,
-
-    -- Referencia lógica a MS_Usuarios.dbo.usuario.id_usuario
     id_receptor INT NOT NULL,
 
     id_chat_oferta BIGINT NOT NULL,
@@ -201,13 +138,16 @@ CREATE TABLE dbo.mensaje_chat (
 
 -- =========================================================
 -- ÍNDICES
--- Se crean para optimizar búsquedas frecuentes.
 -- =========================================================
 CREATE INDEX IX_chat_oferta_trabajador_cliente
 ON dbo.chat_oferta(id_trabajador, id_cliente);
 
 CREATE INDEX IX_chat_oferta_oferta
 ON dbo.chat_oferta(id_oferta_servicio);
+
+-- 🔹 Opcional pero recomendado ahora que existe id_cita
+CREATE INDEX IX_chat_oferta_cita
+ON dbo.chat_oferta(id_cita);
 
 CREATE INDEX IX_chat_oferta_activo
 ON dbo.chat_oferta(activo);
@@ -229,12 +169,7 @@ ON dbo.mensaje_soporte(id_emisor, resuelto, fecha_envio DESC);
 
 -- =========================================================
 -- REFERENCIAS LÓGICAS ENTRE MICROSERVICIOS
---
--- Estas relaciones no se implementan como FOREIGN KEY
--- porque pertenecen a otros microservicios.
---
--- Referencias lógicas:
---
+-- =========================================================
 -- chat_oferta.id_trabajador
 -- chat_oferta.id_cliente
 -- mensaje_chat.id_emisor
@@ -243,9 +178,7 @@ ON dbo.mensaje_soporte(id_emisor, resuelto, fecha_envio DESC);
 -- mensaje_soporte.id_emisor
 -- reporte.id_usuario_emisor
 --
--- Todos apuntan lógicamente a:
--- MS_Usuarios.dbo.usuario.id_usuario
+-- → MS_Usuarios.dbo.usuario.id_usuario
 --
--- chat_oferta.id_oferta_servicio apunta lógicamente a:
--- MS_Servicios.dbo.oferta_servicio.id_oferta_servicio
--- =========================================================
+-- chat_oferta.id_oferta_servicio → MS_Servicios.dbo.oferta_servicio.id_oferta_servicio
+-- chat_oferta.id_cita → MS_Servicios.dbo.cita_servicio.id_cita
