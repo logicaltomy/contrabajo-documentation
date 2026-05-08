@@ -1,11 +1,11 @@
 -- =========================================================
 -- ELIMINACIÓN DE TABLAS EN ORDEN CORRECTO (HIJOS → PADRES)
 -- =========================================================
+IF OBJECT_ID(N'dbo.foto_perfil', N'U') IS NOT NULL DROP TABLE dbo.foto_perfil;
 IF OBJECT_ID(N'dbo.recuperacion_cuenta', N'U') IS NOT NULL DROP TABLE dbo.recuperacion_cuenta;
 IF OBJECT_ID(N'dbo.sesion_usuario', N'U') IS NOT NULL DROP TABLE dbo.sesion_usuario;
 IF OBJECT_ID(N'dbo.historial_usuario', N'U') IS NOT NULL DROP TABLE dbo.historial_usuario;
 IF OBJECT_ID(N'dbo.cedula_identidad', N'U') IS NOT NULL DROP TABLE dbo.cedula_identidad;
-IF OBJECT_ID(N'dbo.foto', N'U') IS NOT NULL DROP TABLE dbo.foto;
 IF OBJECT_ID(N'dbo.usuario', N'U') IS NOT NULL DROP TABLE dbo.usuario;
 IF OBJECT_ID(N'dbo.direccion', N'U') IS NOT NULL DROP TABLE dbo.direccion;
 IF OBJECT_ID(N'dbo.comuna', N'U') IS NOT NULL DROP TABLE dbo.comuna;
@@ -160,6 +160,8 @@ CREATE TABLE dbo.usuario (
     a_materno VARCHAR(60) NULL,
     telefono VARCHAR(9) NULL,
     correo VARCHAR(60) NOT NULL UNIQUE,
+    rango_disponibilidad_m INT NOT NULL CONSTRAINT DF_usuario_rango_disponibilidad_m DEFAULT 20000,
+    rango_busqueda_m INT NOT NULL CONSTRAINT DF_usuario_rango_busqueda_m DEFAULT 20000,
     contrasena_hash VARCHAR(255) NOT NULL,
     fecha_registro DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     fecha_nacimiento DATE NOT NULL,
@@ -172,22 +174,6 @@ CREATE TABLE dbo.usuario (
     FOREIGN KEY (id_direccion) REFERENCES dbo.direccion(id_direccion)
 );
 
--- =========================================================
--- TABLA: FOTO
--- Almacena imágenes asociadas al usuario.
---
--- Aquí se podrán guardar:
--- - Foto de perfil
--- - Fotografías de trabajos realizados
--- - Evidencia visual de servicios prestados
--- =========================================================
-CREATE TABLE dbo.foto (
-    id_foto INT IDENTITY(1,1) PRIMARY KEY,
-    fecha_subida DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
-    enlace VARCHAR(300) NOT NULL,
-    id_usuario INT NOT NULL,
-    FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
-);
 
 -- =========================================================
 -- TABLA: CÉDULA IDENTIDAD
@@ -319,10 +305,40 @@ CREATE TABLE dbo.recuperacion_cuenta  (
 );
 
 -- =========================================================
+-- TABLA: FOTO PERFIL
+-- Almacena la imagen de perfil de un usuario.
+--
+-- Relación 1:1 con usuario (UNIQUE en id_usuario).
+-- El fichero físico vive en el sistema de ficheros del
+-- microservicio usuarios_api (a futuro en bucket externo).
+--
+-- nombre_original : nombre del fichero enviado por el cliente.
+-- nombre_archivo  : nombre único en disco (UUID + extensión).
+-- enlace          : ruta relativa pública, p.ej. /fotos-perfil/abc.jpg
+-- tipo_mime       : image/jpeg, image/png, image/webp, etc.
+-- tamano_bytes    : peso del fichero en bytes.
+-- ancho_px / alto_px : dimensiones opcionales en píxeles.
+-- =========================================================
+CREATE TABLE dbo.foto_perfil (
+    id_foto_perfil  INT IDENTITY(1,1) PRIMARY KEY,
+    fecha_subida    DATETIME2(0)  NOT NULL DEFAULT SYSUTCDATETIME(),
+    nombre_original VARCHAR(255)  NOT NULL,
+    nombre_archivo  VARCHAR(100)  NOT NULL UNIQUE,
+    enlace          VARCHAR(300)  NOT NULL,
+    tipo_mime       VARCHAR(50)   NOT NULL,
+    tamano_bytes    BIGINT        NOT NULL,
+    ancho_px        INT           NULL,
+    alto_px         INT           NULL,
+    id_usuario      INT           NOT NULL UNIQUE,
+    FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario),
+    CONSTRAINT CK_foto_perfil_tamano CHECK (tamano_bytes > 0),
+    CONSTRAINT CK_foto_perfil_mime   CHECK (tipo_mime LIKE 'image/%')
+);
+
+-- =========================================================
 -- ÍNDICES
 -- Se crean para optimizar búsquedas frecuentes y joins.
 -- =========================================================
 CREATE INDEX IX_usuario_tipo_perfil ON dbo.usuario(id_tipo_perfil);
 CREATE INDEX IX_usuario_direccion ON dbo.usuario(id_direccion);
-CREATE INDEX IX_foto_usuario ON dbo.foto(id_usuario);
 CREATE INDEX IX_recuperacion_cuenta_usuario ON dbo.recuperacion_cuenta(id_usuario);

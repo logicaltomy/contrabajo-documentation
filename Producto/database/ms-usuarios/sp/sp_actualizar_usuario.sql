@@ -3,6 +3,8 @@ CREATE OR ALTER PROCEDURE dbo.sp_actualizar_usuario
     @id_usuario INT,
     @username VARCHAR(30),
     @telefono VARCHAR(20),
+    @rango_disponibilidad_m INT = NULL,
+    @rango_busqueda_m INT = NULL,
     @id_direccion INT = NULL
 )
 AS
@@ -28,6 +30,8 @@ BEGIN
         SET 
             username = @username,
             telefono = @telefono,
+            rango_disponibilidad_m = COALESCE(@rango_disponibilidad_m, rango_disponibilidad_m),
+            rango_busqueda_m = COALESCE(@rango_busqueda_m, rango_busqueda_m),
             id_direccion = @id_direccion
         WHERE id_usuario = @id_usuario;
 

@@ -1,4 +1,5 @@
 -- DROP en orden correcto (hijos → padres)
+IF OBJECT_ID(N'dbo.foto', N'U') IS NOT NULL DROP TABLE dbo.foto;
 IF OBJECT_ID(N'dbo.valoracion', N'U') IS NOT NULL DROP TABLE dbo.valoracion;
 IF OBJECT_ID(N'dbo.cita_servicio', N'U') IS NOT NULL DROP TABLE dbo.cita_servicio;
 IF OBJECT_ID(N'dbo.oferta_servicio', N'U') IS NOT NULL DROP TABLE dbo.oferta_servicio;
@@ -96,6 +97,47 @@ CREATE TABLE dbo.valoracion (
     CONSTRAINT CK_valoracion_voto CHECK (voto BETWEEN 1 AND 5)
 );
 
+-- =========================================================
+-- TABLA: FOTO
+-- Almacena metadatos de imágenes asociadas a una oferta.
+--
+-- El archivo físico se guarda en el sistema de ficheros local
+-- del microservicio (a futuro en un contenedor/bucket aparte).
+--
+-- nombre_original : nombre del fichero tal como lo envió el cliente.
+-- nombre_archivo  : nombre único en disco (UUID + extensión).
+-- enlace          : ruta relativa pública para servir la imagen,
+--                   p.ej.  /fotos/a1b2c3d4-....jpg
+-- tipo_mime       : MIME del fichero (image/jpeg, image/png, …).
+-- tamano_bytes    : peso del fichero en bytes.
+-- ancho_px / alto_px : dimensiones opcionales en píxeles.
+--
+-- id_usuario es referencia lógica a MS_Usuarios.dbo.usuario
+-- (no se puede declarar FK física entre bases de datos distintas).
+-- =========================================================
+CREATE TABLE dbo.foto (
+    id_foto            INT IDENTITY(1,1) PRIMARY KEY,
+    fecha_subida       DATETIME2(0)  NOT NULL DEFAULT SYSUTCDATETIME(),
+
+    -- Metadatos del fichero
+    nombre_original    VARCHAR(255)  NOT NULL,
+    nombre_archivo     VARCHAR(100)  NOT NULL UNIQUE,
+    enlace             VARCHAR(300)  NOT NULL,
+    tipo_mime          VARCHAR(50)   NOT NULL,
+    tamano_bytes       BIGINT        NOT NULL,
+    ancho_px           INT           NULL,
+    alto_px            INT           NULL,
+
+    id_oferta_servicio INT           NOT NULL,
+
+    -- Referencia lógica a MS_Usuarios.dbo.usuario.id_usuario
+    id_usuario         INT           NOT NULL,
+
+    FOREIGN KEY (id_oferta_servicio) REFERENCES dbo.oferta_servicio(id_oferta_servicio),
+    CONSTRAINT CK_foto_tamano CHECK (tamano_bytes > 0),
+    CONSTRAINT CK_foto_mime   CHECK (tipo_mime LIKE 'image/%')
+);
+
 -- ÍNDICES
 CREATE INDEX IX_oferta_servicio_categoria ON dbo.oferta_servicio(id_cat_servicio);
 CREATE INDEX IX_oferta_servicio_tipo_precio ON dbo.oferta_servicio(id_tipo_precio);
@@ -107,8 +149,12 @@ CREATE INDEX IX_cita_servicio_cliente ON dbo.cita_servicio(id_cliente, fecha_sol
 
 CREATE INDEX IX_valoracion_trabajador ON dbo.valoracion(id_trabajador, fecha_voto DESC);
 
+CREATE INDEX IX_foto_oferta ON dbo.foto(id_oferta_servicio);
+CREATE INDEX IX_foto_usuario ON dbo.foto(id_usuario);
+
 -- Referencias lógicas cruzadas entre microservicios
 -- oferta_servicio.id_trabajador e id_cliente → MS_Usuarios.dbo.usuario.id_usuario
 -- cita_servicio.id_trabajador e id_cliente → MS_Usuarios.dbo.usuario.id_usuario
 -- cita_servicio.id_coordenadas → MS_Usuarios.dbo.coordenadas.id_coordenadas
 -- valoracion.id_trabajador e id_cliente → MS_Usuarios.dbo.usuario.id_usuario
+-- foto.id_usuario → MS_Usuarios.dbo.usuario.id_usuario
