@@ -97,6 +97,9 @@ CREATE TABLE dbo.reporte (
         CONSTRAINT DF_reporte_fecha_creacion DEFAULT SYSUTCDATETIME(),
 
     descripcion_reporte NVARCHAR(500) NOT NULL,
+    resolucion_reporte VARCHAR(50) NULL,
+    resuelto BIT NOT NULL
+        CONSTRAINT DF_reporte_resuelto DEFAULT 0,
 
     id_usuario_emisor INT NOT NULL,
     id_tipo_reporte INT NOT NULL,
