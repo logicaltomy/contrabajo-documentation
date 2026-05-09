@@ -1,3 +1,19 @@
+-- =========================================================
+-- BASE DE DATOS
+-- =========================================================
+USE master;
+GO
+IF DB_ID(N'MS_Servicios') IS NOT NULL
+BEGIN
+    ALTER DATABASE MS_Servicios SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE MS_Servicios;
+END
+GO
+CREATE DATABASE MS_Servicios;
+GO
+USE MS_Servicios;
+GO
+
 -- DROP en orden correcto (hijos → padres)
 IF OBJECT_ID(N'dbo.foto', N'U') IS NOT NULL DROP TABLE dbo.foto;
 IF OBJECT_ID(N'dbo.valoracion', N'U') IS NOT NULL DROP TABLE dbo.valoracion;
@@ -158,3 +174,13 @@ CREATE INDEX IX_foto_usuario ON dbo.foto(id_usuario);
 -- cita_servicio.id_coordenadas → MS_Usuarios.dbo.coordenadas.id_coordenadas
 -- valoracion.id_trabajador e id_cliente → MS_Usuarios.dbo.usuario.id_usuario
 -- foto.id_usuario → MS_Usuarios.dbo.usuario.id_usuario
+
+-- =========================================================
+-- ACCESO DE APLICACIÓN
+-- Mapea el login de servidor 'admincontrabajo' como usuario
+-- dentro de esta base de datos.
+-- Debe ejecutarse cada vez que se recrea la BD desde cero.
+-- =========================================================
+IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'admincontrabajo')
+    CREATE USER admincontrabajo FOR LOGIN admincontrabajo;
+ALTER ROLE db_owner ADD MEMBER admincontrabajo;

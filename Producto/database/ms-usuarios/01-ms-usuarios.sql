@@ -1,4 +1,20 @@
 -- =========================================================
+-- BASE DE DATOS
+-- =========================================================
+USE master;
+GO
+IF DB_ID(N'MS_Usuarios') IS NOT NULL
+BEGIN
+    ALTER DATABASE MS_Usuarios SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE MS_Usuarios;
+END
+GO
+CREATE DATABASE MS_Usuarios;
+GO
+USE MS_Usuarios;
+GO
+
+-- =========================================================
 -- ELIMINACIÓN DE TABLAS EN ORDEN CORRECTO (HIJOS → PADRES)
 -- =========================================================
 IF OBJECT_ID(N'dbo.foto_perfil', N'U') IS NOT NULL DROP TABLE dbo.foto_perfil;
@@ -342,3 +358,13 @@ CREATE TABLE dbo.foto_perfil (
 CREATE INDEX IX_usuario_tipo_perfil ON dbo.usuario(id_tipo_perfil);
 CREATE INDEX IX_usuario_direccion ON dbo.usuario(id_direccion);
 CREATE INDEX IX_recuperacion_cuenta_usuario ON dbo.recuperacion_cuenta(id_usuario);
+
+-- =========================================================
+-- ACCESO DE APLICACIÓN
+-- Mapea el login de servidor 'admincontrabajo' como usuario
+-- dentro de esta base de datos.
+-- Debe ejecutarse cada vez que se recrea la BD desde cero.
+-- =========================================================
+IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'admincontrabajo')
+    CREATE USER admincontrabajo FOR LOGIN admincontrabajo;
+ALTER ROLE db_owner ADD MEMBER admincontrabajo;

@@ -1,4 +1,20 @@
 -- =========================================================
+-- BASE DE DATOS
+-- =========================================================
+USE master;
+GO
+IF DB_ID(N'MS_Comunicaciones') IS NOT NULL
+BEGIN
+    ALTER DATABASE MS_Comunicaciones SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE MS_Comunicaciones;
+END
+GO
+CREATE DATABASE MS_Comunicaciones;
+GO
+USE MS_Comunicaciones;
+GO
+
+-- =========================================================
 -- ELIMINACIÓN DE TABLAS EN ORDEN CORRECTO (HIJOS → PADRES)
 -- =========================================================
 IF OBJECT_ID(N'dbo.mensaje_chat', N'U') IS NOT NULL DROP TABLE dbo.mensaje_chat;
@@ -38,6 +54,12 @@ CREATE TABLE dbo.chat_oferta (
     -- Puede ser NULL porque no todo chat genera una cita
     -- Referencia lógica a MS_Servicios.dbo.cita_servicio.id_cita
     id_cita INT NULL,
+
+    -- Datos de visualizacion desnormalizados (se guardan al crear el chat).
+    -- Evitan joins cross-microservicio al listar chats.
+    username_trabajador VARCHAR(100) NULL,
+    username_cliente    VARCHAR(100) NULL,
+    titulo_servicio     VARCHAR(200) NULL,
 
     activo BIT NOT NULL
         CONSTRAINT DF_chat_oferta_activo DEFAULT 1,
@@ -125,6 +147,10 @@ CREATE TABLE dbo.mensaje_chat (
     fecha_recibido DATETIME2(0) NULL,
     fecha_leido DATETIME2(0) NULL,
 
+    -- 0 = mensaje normal, 1 = mensaje de sistema (generado automaticamente por el backend)
+    tipo TINYINT NOT NULL
+        CONSTRAINT DF_mensaje_chat_tipo DEFAULT 0,
+
     contenido NVARCHAR(1000) NOT NULL,
 
     id_emisor INT NOT NULL,
@@ -185,3 +211,13 @@ ON dbo.mensaje_soporte(id_emisor, resuelto, fecha_envio DESC);
 --
 -- chat_oferta.id_oferta_servicio → MS_Servicios.dbo.oferta_servicio.id_oferta_servicio
 -- chat_oferta.id_cita → MS_Servicios.dbo.cita_servicio.id_cita
+
+-- =========================================================
+-- ACCESO DE APLICACIÓN
+-- Mapea el login de servidor 'admincontrabajo' como usuario
+-- dentro de esta base de datos.
+-- Debe ejecutarse cada vez que se recrea la BD desde cero.
+-- =========================================================
+IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'admincontrabajo')
+    CREATE USER admincontrabajo FOR LOGIN admincontrabajo;
+ALTER ROLE db_owner ADD MEMBER admincontrabajo;
