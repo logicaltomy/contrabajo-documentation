@@ -18,6 +18,7 @@ GO
 -- ELIMINACIÓN DE TABLAS EN ORDEN CORRECTO (HIJOS → PADRES)
 -- =========================================================
 IF OBJECT_ID(N'dbo.foto_perfil', N'U') IS NOT NULL DROP TABLE dbo.foto_perfil;
+IF OBJECT_ID(N'dbo.usuario_baneo', N'U') IS NOT NULL DROP TABLE dbo.usuario_baneo;
 IF OBJECT_ID(N'dbo.recuperacion_cuenta', N'U') IS NOT NULL DROP TABLE dbo.recuperacion_cuenta;
 IF OBJECT_ID(N'dbo.sesion_usuario', N'U') IS NOT NULL DROP TABLE dbo.sesion_usuario;
 IF OBJECT_ID(N'dbo.historial_usuario', N'U') IS NOT NULL DROP TABLE dbo.historial_usuario;
@@ -278,6 +279,28 @@ CREATE TABLE dbo.sesion_usuario (
     activa BIT NOT NULL DEFAULT 1,
 
     CONSTRAINT FK_sesion_usuario_usuario
+        FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
+);
+
+-- =========================================================
+-- TABLA: USUARIO_BANEO
+-- Registro histórico de sanciones aplicadas por moderación.
+--
+-- permanente = 1  -> baneo definitivo
+-- permanente = 0  -> suspensión temporal (fecha_fin obligatoria a nivel lógico)
+-- activo = 1      -> sanción vigente
+-- activo = 0      -> sanción cerrada/levantada
+-- =========================================================
+CREATE TABLE dbo.usuario_baneo (
+    id_usuario_baneo BIGINT IDENTITY(1,1) PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_moderador INT NULL,
+    motivo VARCHAR(500) NULL,
+    fecha_inicio DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
+    fecha_fin DATETIME2(0) NULL,
+    permanente BIT NOT NULL DEFAULT 0,
+    activo BIT NOT NULL DEFAULT 1,
+    CONSTRAINT FK_usuario_baneo_usuario
         FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
 );
 
