@@ -1,38 +1,55 @@
-Anexo: Índice de Repositorios Oficiales del Proyecto
-Para garantizar la transparencia en la revisión del código fuente, el control de versiones y la auditoría técnica por parte de la comisión evaluadora, se detallan los accesos directos al ecosistema de repositorios del Proyecto Contrabajo:
+# Anexo: Indice de Repositorios Oficiales del Proyecto
 
-Repositorio: contrabajo-usuarios-api
+Para la revision del ecosistema de Contrabajo, el campo `links_git` debe consolidar todos los repositorios del proyecto cuando exista una arquitectura distribuida en multiples fuentes.
 
-Enlace: https://github.com/lPacal/contrabajo-usuarios-api
+## Estructura esperada para `links_git`
 
-Contenido: Microservicio del ecosistema Backend desarrollado en Spring Boot encargado del ciclo de vida de las cuentas, autenticación basada en seguridad Stateless, emisión de Tokens JWT y el proceso de verificación OCR para el ascenso al perfil de Trabajador.
+Si el proyecto esta dividido en varios repositorios, deben registrarse **todos los links dentro de la misma celda**, separados por punto y coma (`;`) o en renglones distintos.
 
-Repositorio: contrabajo-servicios-api
+Formato sugerido:
 
-Enlace: https://github.com/lPacal/contrabajo-servicios-api
+```text
+https://github.com/lPacal/contrabajo-usuarios-api;
+https://github.com/lPacal/contrabajo-servicios-api;
+https://github.com/lPacal/contrabajo-comunicaciones-api;
+https://github.com/lPacal/contrabajo-fotos-api;
+https://github.com/lPacal/contrabajo-config-server;
+https://github.com/NikoGox/contrabajo-deploy;
+https://github.com/NikoGox/Contrabajo-App
+```
 
-Contenido: Microservicio core en Spring Boot que gestiona la lógica transaccional de la plataforma, controlando la publicación de ofertas técnicas de oficios, la disponibilidad de los servicios, agendamiento de citas y la persistencia de valoraciones.
+## Repositorios del Proyecto Contrabajo
 
-Repositorio: contrabajo-comunicaciones-api
+| Repositorio | Rama recomendada | Enlace | Contenido |
+| --- | --- | --- | --- |
+| `contrabajo-usuarios-api` | `integracion` | https://github.com/lPacal/contrabajo-usuarios-api | Microservicio de usuarios, autenticacion JWT, perfiles, registro y seguridad. |
+| `contrabajo-servicios-api` | `integracion` | https://github.com/lPacal/contrabajo-servicios-api | Microservicio de ofertas, categorias, agenda y logica transaccional de servicios. |
+| `contrabajo-comunicaciones-api` | `integracion` | https://github.com/lPacal/contrabajo-comunicaciones-api | Microservicio de chat, soporte, notificaciones y reportes. |
+| `contrabajo-fotos-api` | `main` | https://github.com/lPacal/contrabajo-fotos-api | Microservicio de almacenamiento y procesamiento de imagenes. |
+| `contrabajo-config-server` | `main` | https://github.com/lPacal/contrabajo-config-server | Servidor centralizado de configuracion para los microservicios. |
+| `contrabajo-deploy` | `main` | https://github.com/NikoGox/contrabajo-deploy | Orquestacion de contenedores, variables de entorno y despliegue con Docker Compose. |
+| `Contrabajo-App` | `main` | https://github.com/NikoGox/Contrabajo-App | Aplicacion movil Android desarrollada en Kotlin. |
 
-Enlace: https://github.com/lPacal/contrabajo-comunicaciones-api
+## Clonacion del Ecosistema Completo
 
-Contenido: Microservicio del Backend en Spring Boot enfocado en la interacción entre usuarios, administrando la mensajería asíncrona, canales de chat bidireccionales y la capa de gestión de reportes/denuncias operativas para moderación.
+```bash
+# 1. Crear la carpeta para el entorno y acceder a ella
+mkdir -p espacio-contrabajo && cd espacio-contrabajo
 
-Repositorio: contrabajo-config-server
+# 2. Microservicios del Core Backend (clonados directamente en la rama integracion)
+git clone -b integracion https://github.com/lPacal/contrabajo-usuarios-api.git
+git clone -b integracion https://github.com/lPacal/contrabajo-servicios-api.git
+git clone -b integracion https://github.com/lPacal/contrabajo-comunicaciones-api.git
 
-Enlace: https://github.com/lPacal/contrabajo-config-server
+# 3. Microservicio de soporte (si no tiene rama de integracion, se usa main)
+git clone https://github.com/lPacal/contrabajo-fotos-api.git
 
-Contenido: Servidor centralizado de configuración perimetral de la arquitectura. Administra e inyecta de manera desacoplada las propiedades operacionales y variables de entorno hacia cada microservicio en caliente durante su inicialización.
+# 4. Servidor de configuracion centralizada (rama main)
+git clone https://github.com/lPacal/contrabajo-config-server.git
 
-Repositorio: Contrabajo-App
+# 5. Orquestacion, Docker Compose y despliegue (rama main)
+git clone https://github.com/NikoGox/contrabajo-deploy.git
 
-Enlace: https://github.com/NikoGox/Contrabajo-App
-
-Contenido: Código fuente del cliente Frontend móvil de la solución, desarrollado nativamente en Kotlin bajo Android Studio. Integra la maquetación visual de las interfaces de usuario (UI/UX) y el consumo de las APIs del Backend.
-
-Repositorio: contrabajo-deploy
-
-Enlace: https://github.com/NikoGox/contrabajo-deploy
-
-Contenido: Repositorio de orquestación, despliegue e infraestructura. Contiene la configuración unificada de contenedores de Docker (docker-compose.yml), variables base (.env.example) y scripts de inicialización del motor relacional SQL Server.
+# 6. Aplicacion frontend movil Android (rama main)
+git clone https://github.com/NikoGox/Contrabajo-App.git
+```
